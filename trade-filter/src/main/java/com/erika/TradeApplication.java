@@ -23,19 +23,13 @@ public class TradeApplication {
 	private static final String COMMA = ",";
 	private static final DateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
 
-	public List<Trade> getTradesByDate(String from, String to) {
-		List<Trade> tradeList = new ArrayList<Trade>();
+	public Map<String , List<Trade>> getTradesByDate(String from, String to) {
+		Map<String , List<Trade>> tradeMap = new HashMap<>();
 
 		try {
 			Date fromDate = DF.parse(from);
 			Date toDate = DF.parse(to);
 			BufferedReader br = readFile("trades.txt");
-/*
-			tradeList = br.lines()
-					      .skip(1)
-					      .map(line -> mapToTrade(line))
-					      .filter(trade -> trade.getTradeDate().after(fromDate) && trade.getTradeDate().before(toDate))
-					      .collect(Collectors.toList());*/
 		
 			int lineNo = 0;
 			String line;
@@ -43,7 +37,14 @@ public class TradeApplication {
 				if(lineNo !=0) {
 					Trade tr = mapToTrade(line);
 					if(tr.getTradeDate().after(fromDate) && tr.getTradeDate().before(toDate)) {
-						tradeList.add(tr);
+						if(tradeMap.get(tr.getIntId()) == null) {
+							List<Trade> trads = new ArrayList<>();
+							trads.add(tr);
+							tradeMap.put(tr.getIntId(), trads);
+						}else {
+							tradeMap.get(tr.getIntId()).add(tr);
+						}
+						
 					}
 					
 				}
@@ -53,24 +54,30 @@ public class TradeApplication {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return tradeList;
+		return tradeMap;
 	}
 
 	public List<Instrument> getMissingInstruments(String from, String to) {
 
-		Map<String, String> instMap = new HashMap<String, String>();
+		List<Instrument> instList = new ArrayList<>();
+		List<Instrument> missingList = new ArrayList<>();
 
 		try {
 			
 			BufferedReader br = readFile("inst.txt");
 
-			instMap = br.lines()
+			instList = br.lines()
 					     .skip(1)
 					     .map(line -> mapToInstrument(line))
-						 .collect(Collectors.toMap(Instrument::getInstId, Instrument::getName));
+						 .collect(Collectors.toList());
 			br.close();
-			List<Trade> tradList = getTradesByDate(from, to);
-			System.out.println(instMap);
+			Map<String, List<Trade>> tradMap = getTradesByDate(from, to);
+			for(Instrument inst : instList) {
+				if(tradMap.get(inst.getInstId()) == null) {
+					missingList.add(inst);
+				}
+			}
+			return missingList;
 
 		} catch (Exception e) {
 			e.printStackTrace();
