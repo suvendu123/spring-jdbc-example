@@ -30,14 +30,26 @@ public class TradeApplication {
 			Date fromDate = DF.parse(from);
 			Date toDate = DF.parse(to);
 			BufferedReader br = readFile("trades.txt");
-
+/*
 			tradeList = br.lines()
 					      .skip(1)
-					      .map(mapToTrade)
+					      .map(line -> mapToTrade(line))
 					      .filter(trade -> trade.getTradeDate().after(fromDate) && trade.getTradeDate().before(toDate))
-					      .collect(Collectors.toList());
+					      .collect(Collectors.toList());*/
+		
+			int lineNo = 0;
+			String line;
+			while ((line = br.readLine()) != null) {
+				if(lineNo !=0) {
+					Trade tr = mapToTrade(line);
+					if(tr.getTradeDate().after(fromDate) && tr.getTradeDate().before(toDate)) {
+						tradeList.add(tr);
+					}
+					
+				}
+				lineNo++;
+			}
 			br.close();
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -49,13 +61,12 @@ public class TradeApplication {
 		Map<String, String> instMap = new HashMap<String, String>();
 
 		try {
-			Date fromDate = DF.parse(from);
-			Date toDate = DF.parse(to);
+			
 			BufferedReader br = readFile("inst.txt");
 
 			instMap = br.lines()
 					     .skip(1)
-					     .map(mapToInstrument)
+					     .map(line -> mapToInstrument(line))
 						 .collect(Collectors.toMap(Instrument::getInstId, Instrument::getName));
 			br.close();
 			List<Trade> tradList = getTradesByDate(from, to);
@@ -76,7 +87,7 @@ public class TradeApplication {
 		return br;
 	}
 
-	private Function<String, Trade> mapToTrade = (line) -> {
+	private Trade mapToTrade(String line) {
 
 		String[] record = line.split(COMMA);
 		Trade trade = new Trade();
@@ -96,7 +107,7 @@ public class TradeApplication {
 		return trade;
 	};
 	
-	private Function<String, Instrument> mapToInstrument = (line) -> {
+	private Instrument mapToInstrument(String line) {
 
 		String[] record = line.split(COMMA);
 		Instrument inst = new Instrument();
